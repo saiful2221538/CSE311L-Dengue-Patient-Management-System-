@@ -1,0 +1,2025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dengue Patient Tracking System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --success-color: #27ae60;
+            --info-color: #17a2b8;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .auth-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            padding: 40px;
+            margin-top: 100px;
+        }
+
+        .main-container {
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #34495e 100%);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .sidebar {
+            background: white;
+            min-height: 100vh;
+            box-shadow: 2px 0 15px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+        }
+
+        .sidebar .nav-link {
+            color: var(--primary-color);
+            padding: 12px 20px;
+            margin: 5px 0;
+            border-radius: 8px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background: var(--secondary-color);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .stat-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s;
+            border-left: 5px solid var(--secondary-color);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+            opacity: 0.8;
+        }
+
+        .dashboard-section {
+            display: none;
+        }
+
+        .dashboard-section.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .critical-badge {
+            background: linear-gradient(135deg, #ff416c, #ff4b2b);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.85em;
+        }
+
+        .severe-badge {
+            background: linear-gradient(135deg, #ffb347, #ffcc33);
+            color: #333;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.85em;
+        }
+
+        .moderate-badge {
+            background: linear-gradient(135deg, #36d1dc, #5b86e5);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.85em;
+        }
+
+        .patient-row {
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .patient-row:hover {
+            background-color: #f1f8ff;
+            transform: translateX(5px);
+        }
+
+        .map-container {
+            height: 400px;
+            background: #e8f4f8;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .map-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .form-control, .form-select {
+            border-radius: 10px;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+        }
+
+        .btn {
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--secondary-color), #2980b9);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2980b9, var(--secondary-color));
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .table {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .table thead {
+            background: linear-gradient(135deg, var(--primary-color), #34495e);
+            color: white;
+        }
+
+        .alert {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            height: 100%;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1055;
+        }
+
+        .toast {
+            min-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="login-page" class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-4">
+                <div class="auth-container">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-virus fa-3x text-primary mb-3"></i>
+                        <h2 class="fw-bold">Dengue Tracking System</h2>
+                        <p class="text-muted">Sign in to access the dashboard</p>
+                    </div>
+
+                    <form id="login-form">
+                        <div class="mb-3">
+                            <label class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" required>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-sign-in-alt me-2"></i> Sign In
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="mt-4 text-center">
+                        <div class="alert alert-info">
+                            <small>
+                                <i class="fas fa-info-circle me-1"></i>
+                                Demo Credentials: admin / admin123
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="main-dashboard" style="display: none;">
+        <!-- Navigation -->
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">
+                    <i class="fas fa-virus me-2"></i>
+                    Dengue Patient Tracking System
+                </a>
+                <div class="text-white">
+                    <span id="current-user"></span>
+                    <button class="btn btn-sm btn-light ms-3" onclick="logout()">
+                        <i class="fas fa-sign-out-alt me-1"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Sidebar -->
+                <div class="col-md-3 col-lg-2 sidebar p-0">
+                    <div class="p-3">
+                        <div class="text-center mb-4">
+                            <div class="bg-primary rounded-circle d-inline-flex p-3 mb-2">
+                                <i class="fas fa-hospital-user fa-2x text-white"></i>
+                            </div>
+                            <h6 class="text-primary fw-bold">Dengue Control Center</h6>
+                            <small class="text-muted">Dashboard v1.0</small>
+                        </div>
+
+                        <nav class="nav flex-column">
+                            <button class="nav-link active" onclick="showSection('dashboard')">
+                                <i class="fas fa-tachometer-alt"></i>
+                                <span>Dashboard</span>
+                            </button>
+                            <button class="nav-link" onclick="showSection('patient-registration')">
+                                <i class="fas fa-user-plus"></i>
+                                <span>Register Patient</span>
+                            </button>
+                            <button class="nav-link" onclick="showSection('patient-list')">
+                                <i class="fas fa-users"></i>
+                                <span>All Patients</span>
+                            </button>
+                            <button class="nav-link" onclick="showSection('critical-patients')">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span>Critical Cases</span>
+                            </button>
+                            <button class="nav-link" onclick="showSection('district-stats')">
+                                <i class="fas fa-map-marked-alt"></i>
+                                <span>District Statistics</span>
+                            </button>
+                            <button class="nav-link" onclick="showSection('search-patients')">
+                                <i class="fas fa-search"></i>
+                                <span>Search Patients</span>
+                            </button>
+                            <button class="nav-link" onclick="showSection('contact-tracing')">
+                                <i class="fas fa-network-wired"></i>
+                                <span>Contact Tracing</span>
+                            </button>
+                            <button class="nav-link" onclick="showSection('lab-tests')">
+                                <i class="fas fa-flask"></i>
+                                <span>Lab Tests</span>
+                            </button>
+                            <button class="nav-link" onclick="showSection('daily-monitoring')">
+                                <i class="fas fa-heartbeat"></i>
+                                <span>Daily Monitoring</span>
+                            </button>
+                        </nav>
+
+                        <div class="mt-5 p-3 bg-light rounded">
+                            <small class="text-muted d-block mb-2">System Status</small>
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="me-2">
+                                    <i class="fas fa-database text-success"></i>
+                                </div>
+                                <div>
+                                    <small class="text-muted">Database</small>
+                                    <div class="text-success">Connected</div>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <div class="me-2">
+                                    <i class="fas fa-server text-success"></i>
+                                </div>
+                                <div>
+                                    <small class="text-muted">Last Updated</small>
+                                    <div id="last-updated">Just now</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content -->
+                <div class="col-md-9 col-lg-10 p-4 main-content">
+                    <!-- Dashboard Section -->
+                    <div id="dashboard-section" class="dashboard-section active">
+                        <h3 class="mb-4"><i class="fas fa-tachometer-alt me-2"></i>Dashboard Overview</h3>
+
+                        <!-- Statistics Cards -->
+                        <div class="row mb-4">
+                            <div class="col-md-3 mb-3">
+                                <div class="card stat-card p-3">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h6 class="text-muted">Total Dengue Patients</h6>
+                                            <h2 id="total-dengue">0</h2>
+                                            <small class="text-success" id="today-cases">+0 today</small>
+                                        </div>
+                                        <div>
+                                            <i class="fas fa-virus card-icon text-primary"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="card stat-card p-3">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h6 class="text-muted">Active Cases</h6>
+                                            <h2 id="active-cases">0</h2>
+                                            <small class="text-warning">Under Treatment</small>
+                                        </div>
+                                        <div>
+                                            <i class="fas fa-user-injured card-icon text-warning"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="card stat-card p-3">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h6 class="text-muted">Critical Cases</h6>
+                                            <h2 id="critical-cases">0</h2>
+                                            <small class="text-danger">Immediate attention</small>
+                                        </div>
+                                        <div>
+                                            <i class="fas fa-exclamation-triangle card-icon text-danger"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="card stat-card p-3">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h6 class="text-muted">Hospitalized</h6>
+                                            <h2 id="hospitalized">0</h2>
+                                            <small class="text-info">Inpatient care</small>
+                                        </div>
+                                        <div>
+                                            <i class="fas fa-hospital card-icon text-info"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recent Patients and Charts -->
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="card p-3">
+                                    <h5 class="mb-3"><i class="fas fa-history me-2"></i>Recent Dengue Patients</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover" id="recent-patients-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Patient ID</th>
+                                                    <th>Name</th>
+                                                    <th>Age</th>
+                                                    <th>District</th>
+                                                    <th>Severity</th>
+                                                    <th>Diagnosis Date</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="recent-patients-body">
+                                                <!-- Filled by JavaScript -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card p-3">
+                                    <h5 class="mb-3"><i class="fas fa-chart-pie me-2"></i>Severity Distribution</h5>
+                                    <div class="chart-container">
+                                        <canvas id="severity-chart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- District Statistics -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="card p-3">
+                                    <h5 class="mb-3"><i class="fas fa-map me-2"></i>Top Affected Districts</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>District</th>
+                                                    <th>Total Cases</th>
+                                                    <th>Critical Cases</th>
+                                                    <th>Deaths</th>
+                                                    <th>First Case</th>
+                                                    <th>Latest Case</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="district-stats-body">
+                                                <!-- Filled by JavaScript -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Patient Registration Section -->
+                    <div id="patient-registration-section" class="dashboard-section">
+                        <h3 class="mb-4"><i class="fas fa-user-plus me-2"></i>Register New Dengue Patient</h3>
+
+                        <div class="card p-4">
+                            <form id="patient-form">
+                                <h5 class="mb-3 text-primary">Personal Information</h5>
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label">National ID *</label>
+                                        <input type="text" class="form-control" id="national-id" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">First Name *</label>
+                                        <input type="text" class="form-control" id="first-name" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Last Name *</label>
+                                        <input type="text" class="form-control" id="last-name" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Date of Birth *</label>
+                                        <input type="date" class="form-control" id="dob" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Gender *</label>
+                                        <select class="form-select" id="gender" required>
+                                            <option value="">Select</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Blood Type</label>
+                                        <select class="form-select" id="blood-type">
+                                            <option value="">Select</option>
+                                            <option value="A+">A+</option>
+                                            <option value="A-">A-</option>
+                                            <option value="B+">B+</option>
+                                            <option value="B-">B-</option>
+                                            <option value="AB+">AB+</option>
+                                            <option value="AB-">AB-</option>
+                                            <option value="O+">O+</option>
+                                            <option value="O-">O-</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Phone Number *</label>
+                                        <input type="tel" class="form-control" id="phone" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Emergency Contact</label>
+                                        <input type="tel" class="form-control" id="emergency-contact">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Email Address</label>
+                                        <input type="email" class="form-control" id="email">
+                                    </div>
+                                </div>
+
+                                <h5 class="mb-3 text-primary">Address Information</h5>
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-12">
+                                        <label class="form-label">Street Address *</label>
+                                        <input type="text" class="form-control" id="street-address" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">City *</label>
+                                        <input type="text" class="form-control" id="city" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">District *</label>
+                                        <input type="text" class="form-control" id="district" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Division</label>
+                                        <input type="text" class="form-control" id="division">
+                                    </div>
+                                </div>
+
+                                <h5 class="mb-3 text-primary">Dengue Information</h5>
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Diagnosis Date *</label>
+                                        <input type="date" class="form-control" id="diagnosis-date" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Dengue Type *</label>
+                                        <select class="form-select" id="dengue-type" required>
+                                            <option value="">Select</option>
+                                            <option value="Classic">Classic Dengue</option>
+                                            <option value="Hemorrhagic">Dengue Hemorrhagic Fever</option>
+                                            <option value="Shock Syndrome">Dengue Shock Syndrome</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Severity Level *</label>
+                                        <select class="form-select" id="severity-level" required>
+                                            <option value="">Select</option>
+                                            <option value="Mild">Mild</option>
+                                            <option value="Moderate">Moderate</option>
+                                            <option value="Severe">Severe</option>
+                                            <option value="Critical">Critical</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Infection Source</label>
+                                        <select class="form-select" id="infection-source">
+                                            <option value="">Select</option>
+                                            <option value="Local">Local Transmission</option>
+                                            <option value="Travel">Travel Related</option>
+                                            <option value="Unknown">Unknown</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Platelet Count</label>
+                                        <input type="number" class="form-control" id="platelet-count" min="0" max="500000">
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">Travel History (if any)</label>
+                                        <textarea class="form-control" id="travel-history" rows="2"></textarea>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="hospitalization-required">
+                                            <label class="form-check-label">
+                                                Hospitalization Required
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="fas fa-save me-2"></i> Register Patient
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Patient List Section -->
+                    <div id="patient-list-section" class="dashboard-section">
+                        <h3 class="mb-4"><i class="fas fa-users me-2"></i>All Dengue Patients</h3>
+
+                        <div class="card p-3 mb-4">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <input type="text" class="form-control" id="search-patients" placeholder="Search by name, phone, or ID">
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="filter-severity">
+                                        <option value="">All Severity</option>
+                                        <option value="Mild">Mild</option>
+                                        <option value="Moderate">Moderate</option>
+                                        <option value="Severe">Severe</option>
+                                        <option value="Critical">Critical</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="filter-district">
+                                        <option value="">All Districts</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <button class="btn btn-primary w-100" onclick="loadPatients()">
+                                        <i class="fas fa-search"></i> Filter
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card p-3">
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="patients-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Patient ID</th>
+                                            <th>Name</th>
+                                            <th>Age</th>
+                                            <th>Gender</th>
+                                            <th>Phone</th>
+                                            <th>District</th>
+                                            <th>Severity</th>
+                                            <th>Diagnosis Date</th>
+                                            <th>Outcome</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="patients-body">
+                                        <!-- Filled by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <div>
+                                    <select class="form-select form-select-sm" id="per-page" style="width: auto;" onchange="loadPatients()">
+                                        <option value="10">10 per page</option>
+                                        <option value="20" selected>20 per page</option>
+                                        <option value="50">50 per page</option>
+                                        <option value="100">100 per page</option>
+                                    </select>
+                                </div>
+                                <nav>
+                                    <ul class="pagination mb-0" id="pagination">
+                                        <!-- Pagination will be generated -->
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Critical Patients Section -->
+                    <div id="critical-patients-section" class="dashboard-section">
+                        <h3 class="mb-4"><i class="fas fa-exclamation-triangle me-2 text-danger"></i>Critical Dengue Patients</h3>
+
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            These patients require immediate medical attention and close monitoring
+                        </div>
+
+                        <div class="card p-3">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-danger">
+                                        <tr>
+                                            <th>Patient ID</th>
+                                            <th>Name</th>
+                                            <th>Age</th>
+                                            <th>Emergency Contact</th>
+                                            <th>Platelet Count</th>
+                                            <th>Severity</th>
+                                            <th>District</th>
+                                            <th>Diagnosis Date</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="critical-patients-body">
+                                        <!-- Filled by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- District Statistics Section -->
+                    <div id="district-stats-section" class="dashboard-section">
+                        <h3 class="mb-4"><i class="fas fa-map-marked-alt me-2"></i>District-wise Statistics</h3>
+
+                        <div class="card p-3 mb-4">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h5>Geographic Distribution</h5>
+                                    <div class="map-container">
+                                        <div class="map-placeholder">
+                                            <div class="text-center">
+                                                <i class="fas fa-map fa-3x mb-3"></i>
+                                                <p>District Map Visualization</p>
+                                                <small class="opacity-75">(Interactive map would be implemented here)</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <h5>Top 5 Districts</h5>
+                                    <div id="top-districts-list">
+                                        <!-- Filled by JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card p-3">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-primary">
+                                        <tr>
+                                            <th>District</th>
+                                            <th>Total Cases</th>
+                                            <th>Critical Cases</th>
+                                            <th>Severe Cases</th>
+                                            <th>Deaths</th>
+                                            <th>First Case</th>
+                                            <th>Latest Case</th>
+                                            <th>Case Fatality Rate</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="detailed-district-stats">
+                                        <!-- Filled by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Patient Search Section -->
+                    <div id="search-patients-section" class="dashboard-section">
+                        <h3 class="mb-4"><i class="fas fa-search me-2"></i>Advanced Patient Search</h3>
+
+                        <div class="card p-4 mb-4">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label class="form-label">Patient Name</label>
+                                    <input type="text" class="form-control" id="search-name">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Phone Number</label>
+                                    <input type="text" class="form-control" id="search-phone">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">District</label>
+                                    <select class="form-select" id="search-by-district">
+                                        <option value="">All Districts</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Severity</label>
+                                    <select class="form-select" id="search-by-severity">
+                                        <option value="">All Severity</option>
+                                        <option value="Mild">Mild</option>
+                                        <option value="Moderate">Moderate</option>
+                                        <option value="Severe">Severe</option>
+                                        <option value="Critical">Critical</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Date From</label>
+                                    <input type="date" class="form-control" id="date-from">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Date To</label>
+                                    <input type="date" class="form-control" id="date-to">
+                                </div>
+                                <div class="col-md-4 d-flex align-items-end">
+                                    <button class="btn btn-primary w-100" onclick="advancedSearch()">
+                                        <i class="fas fa-search me-1"></i> Search
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card p-3">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-info">
+                                        <tr>
+                                            <th>Patient ID</th>
+                                            <th>Name</th>
+                                            <th>Age</th>
+                                            <th>Phone</th>
+                                            <th>District</th>
+                                            <th>Severity</th>
+                                            <th>Platelet Count</th>
+                                            <th>Diagnosis Date</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="search-results-body">
+                                        <!-- Filled by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Tracing Section -->
+                    <div id="contact-tracing-section" class="dashboard-section">
+                        <h3 class="mb-4"><i class="fas fa-network-wired me-2"></i>Contact Tracing</h3>
+
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="card p-3 mb-4">
+                                    <h5 class="mb-3">Add Contact for Patient</h5>
+                                    <form id="contact-form">
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Patient ID *</label>
+                                                <input type="number" class="form-control" id="contact-patient-id" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Contact Name *</label>
+                                                <input type="text" class="form-control" id="contact-name" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Contact Phone</label>
+                                                <input type="text" class="form-control" id="contact-phone">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Relationship</label>
+                                                <select class="form-select" id="contact-relation">
+                                                    <option value="">Select</option>
+                                                    <option value="Family">Family Member</option>
+                                                    <option value="Colleague">Colleague</option>
+                                                    <option value="Neighbor">Neighbor</option>
+                                                    <option value="Friend">Friend</option>
+                                                    <option value="Other">Other</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Exposure Date</label>
+                                                <input type="date" class="form-control" id="exposure-date">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Exposure Location</label>
+                                                <input type="text" class="form-control" id="exposure-location">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Contact Status</label>
+                                                <select class="form-select" id="contact-status">
+                                                    <option value="Monitored">Under Monitoring</option>
+                                                    <option value="Tested">Tested</option>
+                                                    <option value="Positive">Tested Positive</option>
+                                                    <option value="Negative">Tested Negative</option>
+                                                    <option value="Quarantined">Quarantined</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-12">
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="fas fa-plus me-1"></i> Add Contact
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                <div class="card p-3">
+                                    <h5 class="mb-3">Contact Network</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead class="table-warning">
+                                                <tr>
+                                                    <th>Infected Patient</th>
+                                                    <th>Contact Name</th>
+                                                    <th>Relationship</th>
+                                                    <th>Exposure Date</th>
+                                                    <th>Status</th>
+                                                    <th>Phone</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="contact-network-body">
+                                                <!-- Filled by JavaScript -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="card p-3">
+                                    <h5 class="mb-3">Contact Tracing Guide</h5>
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <strong>Key Principles:</strong>
+                                    </div>
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item">
+                                            <i class="fas fa-user-check text-primary me-2"></i>
+                                            Identify all close contacts
+                                        </li>
+                                        <li class="list-group-item">
+                                            <i class="fas fa-clock text-primary me-2"></i>
+                                            Trace back 2 days before symptoms
+                                        </li>
+                                        <li class="list-group-item">
+                                            <i class="fas fa-home text-primary me-2"></i>
+                                            Include household members
+                                        </li>
+                                        <li class="list-group-item">
+                                            <i class="fas fa-briefcase text-primary me-2"></i>
+                                            Include workplace contacts
+                                        </li>
+                                        <li class="list-group-item">
+                                            <i class="fas fa-hospital text-primary me-2"></i>
+                                            Monitor for 14 days
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <div class="card p-3 mt-4">
+                                    <h5 class="mb-3">Statistics</h5>
+                                    <div class="text-center">
+                                        <div class="display-4" id="total-contacts">0</div>
+                                        <p class="text-muted">Total Contacts Traced</p>
+                                    </div>
+                                    <div class="row text-center mt-3">
+                                        <div class="col-6">
+                                            <div class="h4 text-success" id="positive-contacts">0</div>
+                                            <small class="text-muted">Positive</small>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="h4 text-info" id="monitored-contacts">0</div>
+                                            <small class="text-muted">Under Monitoring</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lab Tests Section -->
+                    <div id="lab-tests-section" class="dashboard-section">
+                        <h3 class="mb-4"><i class="fas fa-flask me-2"></i>Lab Tests Management</h3>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card p-4">
+                                    <h5 class="mb-3">Add New Lab Test</h5>
+                                    <form id="lab-test-form">
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Patient ID *</label>
+                                                <input type="number" class="form-control" id="test-patient-id" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Test Date *</label>
+                                                <input type="date" class="form-control" id="test-date" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Test Type *</label>
+                                                <select class="form-select" id="test-type" required>
+                                                    <option value="">Select</option>
+                                                    <option value="NS1 Antigen">NS1 Antigen</option>
+                                                    <option value="IgM Antibody">IgM Antibody</option>
+                                                    <option value="IgG Antibody">IgG Antibody</option>
+                                                    <option value="PCR">PCR</option>
+                                                    <option value="Complete Blood Count">Complete Blood Count</option>
+                                                    <option value="Platelet Count">Platelet Count</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Test Result *</label>
+                                                <select class="form-select" id="test-result" required>
+                                                    <option value="">Select</option>
+                                                    <option value="Positive">Positive</option>
+                                                    <option value="Negative">Negative</option>
+                                                    <option value="Inconclusive">Inconclusive</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Result Value</label>
+                                                <input type="text" class="form-control" id="result-value">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Normal Range</label>
+                                                <input type="text" class="form-control" id="normal-range">
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="form-label">Lab Name</label>
+                                                <input type="text" class="form-control" id="lab-name">
+                                            </div>
+                                            <div class="col-12">
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="fas fa-save me-1"></i> Save Lab Test
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card p-3">
+                                    <h5 class="mb-3">Recent Lab Tests</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Test ID</th>
+                                                    <th>Patient ID</th>
+                                                    <th>Test Type</th>
+                                                    <th>Result</th>
+                                                    <th>Date</th>
+                                                    <th>Value</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="lab-tests-body">
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Daily Monitoring Section -->
+                    <div id="daily-monitoring-section" class="dashboard-section">
+                        <h3 class="mb-4"><i class="fas fa-heartbeat me-2"></i>Daily Patient Monitoring</h3>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card p-4">
+                                    <h5 class="mb-3">Add Daily Monitoring Record</h5>
+                                    <form id="monitoring-form">
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Patient ID *</label>
+                                                <input type="number" class="form-control" id="monitor-patient-id" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Monitor Date *</label>
+                                                <input type="date" class="form-control" id="monitor-date" required>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Temperature (°C)</label>
+                                                <input type="number" step="0.1" class="form-control" id="temperature">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Blood Pressure</label>
+                                                <input type="text" class="form-control" id="blood-pressure" placeholder="120/80">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Platelet Count</label>
+                                                <input type="number" class="form-control" id="monitor-platelet">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Oxygen Saturation (%)</label>
+                                                <input type="number" step="0.1" class="form-control" id="oxygen-saturation">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Pain Level (0-10)</label>
+                                                <input type="number" min="0" max="10" class="form-control" id="pain-level">
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="form-label">Nurse Notes</label>
+                                                <textarea class="form-control" id="nurse-notes" rows="3"></textarea>
+                                            </div>
+                                            <div class="col-12">
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="fas fa-save me-1"></i> Save Monitoring Record
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card p-3">
+                                    <h5 class="mb-3">Monitoring History</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>Patient ID</th>
+                                                    <th>Temperature</th>
+                                                    <th>Platelet</th>
+                                                    <th>BP</th>
+                                                    <th>O2 Sat</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="monitoring-body">
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container for Notifications -->
+    <div class="toast-container">
+        <div id="successToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-success text-white">
+                <strong class="me-auto"><i class="fas fa-check-circle me-2"></i>Success</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body"></div>
+        </div>
+
+        <div id="errorToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-danger text-white">
+                <strong class="me-auto"><i class="fas fa-exclamation-circle me-2"></i>Error</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    // Global variables
+    let currentUser = null;
+    let currentPage = 1;
+    let totalPages = 1;
+    let severityChart = null;
+    let criticalTrendChart = null;
+
+    // API Base URL
+    const API_BASE = 'http://localhost:5000/api';
+
+    // Initialize when page loads
+    $(document).ready(function() {
+        checkLoginStatus();
+        $('#login-form').submit(handleLogin);
+        $('#patient-form').submit(handlePatientRegistration);
+        $('#contact-form').submit(handleContactRegistration);
+        $('#lab-test-form').submit(handleLabTest);
+        $('#monitoring-form').submit(handleDailyMonitoring);
+
+        // Initialize toast
+        $('.toast').toast({ delay: 3000 });
+    });
+
+    // Toast notification functions
+    function showSuccess(message) {
+        $('#successToast .toast-body').text(message);
+        $('#successToast').toast('show');
+    }
+
+    function showError(message) {
+        $('#errorToast .toast-body').text(message);
+        $('#errorToast').toast('show');
+    }
+
+    // Authentication
+    function checkLoginStatus() {
+        // Check if user is already logged in (from localStorage)
+        const user = localStorage.getItem('user');
+        if (user) {
+            try {
+                currentUser = JSON.parse(user);
+                showDashboard();
+            } catch (e) {
+                localStorage.removeItem('user');
+            }
+        }
+    }
+
+    async function handleLogin(e) {
+        e.preventDefault();
+
+        const username = $('#username').val();
+        const password = $('#password').val();
+
+        try {
+            const response = await fetch(`${API_BASE}/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                localStorage.setItem('user', JSON.stringify(data.user));
+                showDashboard();
+                showSuccess('Login successful!');
+            } else {
+                showError(data.error || 'Invalid credentials');
+            }
+        } catch (error) {
+            showError('Network error. Please check if backend is running.');
+            console.error('Login error:', error);
+        }
+    }
+
+    function logout() {
+        localStorage.removeItem('user');
+        $('#main-dashboard').hide();
+        $('#login-page').show();
+        showSuccess('Logged out successfully');
+    }
+
+    function showDashboard() {
+        $('#login-page').hide();
+        $('#main-dashboard').show();
+        currentUser = JSON.parse(localStorage.getItem('user'));
+        $('#current-user').html(`
+            <i class="fas fa-user me-1"></i>
+            ${currentUser.full_name} (${currentUser.role})
+        `);
+        loadDashboardData();
+        loadPatients();
+        loadCriticalPatients();
+        loadDistrictStats();
+        loadContactTracing();
+        loadLabTests();
+        loadMonitoringData();
+        populateDistrictFilters();
+    }
+
+    // Dashboard Functions
+    async function loadDashboardData() {
+        try {
+            const response = await fetch(`${API_BASE}/dashboard/stats`);
+            const data = await response.json();
+            updateDashboardStats(data);
+        } catch (error) {
+            console.error('Error loading dashboard:', error);
+            // Fallback to demo data
+            const mockData = {
+                total_patients: 156,
+                dengue_patients: 123,
+                active_cases: 89,
+                critical_cases: 15,
+                recovered: 34,
+                hospitalized: 67,
+                today_cases: 8,
+                recent_patients: [
+                    { patient_id: 1001, name: 'Ahmed Rahman', age: 35, district: 'Dhaka', severity: 'Critical', date: '2024-01-15' },
+                    { patient_id: 1002, name: 'Fatima Begum', age: 28, district: 'Chittagong', severity: 'Severe', date: '2024-01-14' },
+                    { patient_id: 1003, name: 'Karim Uddin', age: 42, district: 'Rajshahi', severity: 'Moderate', date: '2024-01-14' },
+                    { patient_id: 1004, name: 'Sadia Islam', age: 31, district: 'Dhaka', severity: 'Mild', date: '2024-01-13' },
+                    { patient_id: 1005, name: 'Rahim Khan', age: 55, district: 'Khulna', severity: 'Critical', date: '2024-01-13' }
+                ]
+            };
+            updateDashboardStats(mockData);
+        }
+    }
+
+    function updateDashboardStats(data) {
+        $('#total-dengue').text(data.dengue_patients);
+        $('#active-cases').text(data.active_cases);
+        $('#critical-cases').text(data.critical_cases);
+        $('#hospitalized').text(data.hospitalized || 0);
+        $('#today-cases').text(`+${data.today_cases || 0} today`);
+
+        // Update recent patients
+        updateRecentPatients(data.recent_patients || []);
+
+        // Update charts
+        updateCharts();
+
+        $('#last-updated').text(new Date().toLocaleTimeString());
+    }
+
+    function updateRecentPatients(patients) {
+        const tbody = $('#recent-patients-body');
+        tbody.empty();
+
+        patients.forEach(patient => {
+            const severityClass = getSeverityClass(patient.severity);
+            tbody.append(`
+                <tr class="patient-row" onclick="viewPatientDetails(${patient.patient_id})">
+                    <td>${patient.patient_id}</td>
+                    <td>${patient.name}</td>
+                    <td>${patient.age}</td>
+                    <td>${patient.district}</td>
+                    <td><span class="${severityClass}">${patient.severity}</span></td>
+                    <td>${patient.date}</td>
+                </tr>
+            `);
+        });
+    }
+
+    function updateCharts() {
+        // Severity distribution chart
+        const severityCtx = document.getElementById('severity-chart');
+        if (severityChart) {
+            severityChart.destroy();
+        }
+
+        severityChart = new Chart(severityCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Critical', 'Severe', 'Moderate', 'Mild'],
+                datasets: [{
+                    data: [15, 25, 45, 38],
+                    backgroundColor: [
+                        '#e74c3c',
+                        '#f39c12',
+                        '#3498db',
+                        '#2ecc71'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+
+    // Patient Management
+    async function handlePatientRegistration(e) {
+        e.preventDefault();
+
+        const patientData = {
+            national_id: $('#national-id').val() || 'ID' + Date.now(),
+            first_name: $('#first-name').val(),
+            last_name: $('#last-name').val(),
+            date_of_birth: $('#dob').val(),
+            gender: $('#gender').val(),
+            blood_type: $('#blood-type').val(),
+            phone_number: $('#phone').val(),
+            email: $('#email').val(),
+            emergency_contact: $('#emergency-contact').val(),
+            address: {
+                street_address: $('#street-address').val(),
+                city: $('#city').val(),
+                district: $('#district').val(),
+                division: $('#division').val()
+            },
+            dengue_details: {
+                diagnosis_date: $('#diagnosis-date').val(),
+                dengue_type: $('#dengue-type').val(),
+                severity_level: $('#severity-level').val(),
+                infection_source: $('#infection-source').val(),
+                travel_history: $('#travel-history').val(),
+                platelet_count: $('#platelet-count').val() || null,
+                hospitalization_required: $('#hospitalization-required').is(':checked'),
+                outcome: 'Under Treatment'
+            }
+        };
+
+        try {
+            const response = await fetch(`${API_BASE}/patients`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(patientData)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showSuccess(`Patient registered successfully! Patient ID: ${data.patient_id}`);
+                $('#patient-form')[0].reset();
+                loadDashboardData();
+                loadPatients();
+                showSection('patient-list');
+            } else {
+                showError(data.error || 'Failed to register patient');
+            }
+        } catch (error) {
+            showError('Network error. Please try again.');
+            console.error('Registration error:', error);
+        }
+    }
+
+    async function loadPatients() {
+        const search = $('#search-patients').val();
+        const severity = $('#filter-severity').val();
+        const district = $('#filter-district').val();
+        const perPage = $('#per-page').val();
+
+        try {
+            let url = `${API_BASE}/patients?page=${currentPage}&per_page=${perPage}`;
+            if (search) url += `&search=${encodeURIComponent(search)}`;
+            if (severity) url += `&severity=${severity}`;
+            if (district) url += `&district=${district}`;
+
+            const response = await fetch(url);
+            const data = await response.json();
+            updatePatientsTable(data);
+        } catch (error) {
+            console.error('Error loading patients:', error);
+            const demoData = {
+                patients: generateDemoPatients(20),
+                total: 123,
+                pages: 7,
+                current_page: 1
+            };
+            updatePatientsTable(demoData);
+        }
+    }
+
+    function updatePatientsTable(data) {
+        const tbody = $('#patients-body');
+        tbody.empty();
+
+        data.patients.forEach(patient => {
+            const severityClass = getSeverityClass(patient.severity);
+            tbody.append(`
+                <tr class="patient-row" onclick="viewPatientDetails(${patient.patient_id})">
+                    <td>${patient.patient_id}</td>
+                    <td>${patient.name}</td>
+                    <td>${patient.age}</td>
+                    <td>${patient.gender}</td>
+                    <td>${patient.phone}</td>
+                    <td>${patient.district}</td>
+                    <td><span class="${severityClass}">${patient.severity}</span></td>
+                    <td>${patient.diagnosis_date}</td>
+                    <td>${patient.outcome}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); viewPatientDetails(${patient.patient_id})">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+            `);
+        });
+
+        updatePagination(data);
+    }
+
+    async function loadCriticalPatients() {
+        try {
+            const response = await fetch(`${API_BASE}/dengue/critical`);
+            const data = await response.json();
+            updateCriticalPatientsTable(data.critical_patients || []);
+        } catch (error) {
+            console.error('Error loading critical patients:', error);
+            const demoPatients = [
+                { patient_id: 1001, name: 'Ahmed Rahman', age: 35, emergency_contact: '01887654321', severity: 'Critical', platelet_count: 18000, district: 'Dhaka', diagnosis_date: '2024-01-15' },
+                { patient_id: 1005, name: 'Rahim Khan', age: 55, emergency_contact: '01755667788', severity: 'Critical', platelet_count: 15000, district: 'Khulna', diagnosis_date: '2024-01-13' },
+                { patient_id: 1008, name: 'Nusrat Jahan', age: 29, emergency_contact: '01551122334', severity: 'Severe', platelet_count: 35000, district: 'Chittagong', diagnosis_date: '2024-01-14' }
+            ];
+            updateCriticalPatientsTable(demoPatients);
+        }
+    }
+
+    function updateCriticalPatientsTable(patients) {
+        const tbody = $('#critical-patients-body');
+        tbody.empty();
+
+        patients.forEach(patient => {
+            const severityClass = getSeverityClass(patient.severity);
+            tbody.append(`
+                <tr class="patient-row" onclick="viewPatientDetails(${patient.patient_id})">
+                    <td>${patient.patient_id}</td>
+                    <td><strong>${patient.name}</strong></td>
+                    <td>${patient.age}</td>
+                    <td>${patient.emergency_contact}</td>
+                    <td><span class="${patient.platelet_count < 20000 ? 'text-danger fw-bold' : 'text-warning'}">${patient.platelet_count?.toLocaleString() || 'N/A'}</span></td>
+                    <td><span class="${severityClass}">${patient.severity}</span></td>
+                    <td>${patient.district}</td>
+                    <td>${patient.diagnosis_date}</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); alertEmergency(${patient.patient_id})">
+                            <i class="fas fa-bell"></i>
+                        </button>
+                    </td>
+                </tr>
+            `);
+        });
+    }
+
+    async function loadDistrictStats() {
+        try {
+            const response = await fetch(`${API_BASE}/dengue/district-stats`);
+            const data = await response.json();
+            updateDetailedDistrictStats(data.district_stats || []);
+        } catch (error) {
+            console.error('Error loading district stats:', error);
+            const demoStats = [
+                { district: 'Dhaka', total_cases: 45, critical_cases: 6, severe_cases: 9, deaths: 1, first_case: '2024-01-05', latest_case: '2024-01-15' },
+                { district: 'Chittagong', total_cases: 28, critical_cases: 3, severe_cases: 5, deaths: 0, first_case: '2024-01-06', latest_case: '2024-01-14' },
+                { district: 'Rajshahi', total_cases: 18, critical_cases: 2, severe_cases: 3, deaths: 0, first_case: '2024-01-08', latest_case: '2024-01-14' },
+                { district: 'Khulna', total_cases: 12, critical_cases: 1, severe_cases: 2, deaths: 0, first_case: '2024-01-09', latest_case: '2024-01-13' },
+                { district: 'Sylhet', total_cases: 8, critical_cases: 1, severe_cases: 1, deaths: 0, first_case: '2024-01-10', latest_case: '2024-01-12' }
+            ];
+            updateDetailedDistrictStats(demoStats);
+        }
+    }
+
+    function updateDetailedDistrictStats(stats) {
+        const tbody = $('#detailed-district-stats');
+        tbody.empty();
+
+        stats.forEach(stat => {
+            const fatalityRate = stat.deaths > 0 ? ((stat.deaths / stat.total_cases) * 100).toFixed(2) : '0.00';
+            tbody.append(`
+                <tr>
+                    <td><strong>${stat.district}</strong></td>
+                    <td>${stat.total_cases}</td>
+                    <td><span class="text-danger">${stat.critical_cases}</span></td>
+                    <td><span class="text-warning">${stat.severe_cases}</span></td>
+                    <td><span class="text-muted">${stat.deaths}</span></td>
+                    <td>${stat.first_case}</td>
+                    <td>${stat.latest_case}</td>
+                    <td>${fatalityRate}%</td>
+                </tr>
+            `);
+        });
+    }
+
+    // Contact Tracing
+    async function handleContactRegistration(e) {
+        e.preventDefault();
+
+        const contactData = {
+            contact_name: $('#contact-name').val(),
+            contact_phone: $('#contact-phone').val(),
+            contact_relation: $('#contact-relation').val(),
+            exposure_date: $('#exposure-date').val(),
+            exposure_location: $('#exposure-location').val(),
+            contact_status: $('#contact-status').val()
+        };
+
+        const patientId = $('#contact-patient-id').val();
+
+        if (!patientId) {
+            showError('Please enter Patient ID');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/patients/${patientId}/contacts`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(contactData)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showSuccess('Contact added successfully!');
+                $('#contact-form')[0].reset();
+                loadContactTracing();
+            } else {
+                showError(data.error || 'Failed to add contact');
+            }
+        } catch (error) {
+            showError('Network error. Please try again.');
+            console.error('Contact registration error:', error);
+        }
+    }
+
+    async function loadContactTracing() {
+        try {
+            const response = await fetch(`${API_BASE}/contact-tracing`);
+            const data = await response.json();
+            updateContactNetwork(data.contacts || []);
+            updateContactStats(data.stats || { total: 0, positive: 0, monitored: 0 });
+        } catch (error) {
+            console.error('Error loading contact tracing:', error);
+            const demoContacts = [
+                { infected_patient: 'Ahmed Rahman (1001)', contact_name: 'Sara Ahmed', relation: 'Family', exposure_date: '2024-01-13', status: 'Monitored', phone: '01711111111' },
+                { infected_patient: 'Fatima Begum (1002)', contact_name: 'Rashid Khan', relation: 'Colleague', exposure_date: '2024-01-12', status: 'Tested', phone: '01822222222' },
+                { infected_patient: 'Karim Uddin (1003)', contact_name: 'Jamil Hossain', relation: 'Neighbor', exposure_date: '2024-01-11', status: 'Negative', phone: '01933333333' }
+            ];
+            updateContactNetwork(demoContacts);
+            updateContactStats({ total: 3, positive: 0, monitored: 1 });
+        }
+    }
+
+    function updateContactNetwork(contacts) {
+        const tbody = $('#contact-network-body');
+        tbody.empty();
+
+        contacts.forEach(contact => {
+            const statusClass = getContactStatusClass(contact.status);
+            tbody.append(`
+                <tr>
+                    <td>${contact.infected_patient}</td>
+                    <td>${contact.contact_name}</td>
+                    <td>${contact.relation}</td>
+                    <td>${contact.exposure_date}</td>
+                    <td><span class="${statusClass}">${contact.status}</span></td>
+                    <td>${contact.phone}</td>
+                </tr>
+            `);
+        });
+    }
+
+    function updateContactStats(stats) {
+        $('#total-contacts').text(stats.total);
+        $('#positive-contacts').text(stats.positive);
+        $('#monitored-contacts').text(stats.monitored);
+    }
+
+    // Lab Tests
+    async function handleLabTest(e) {
+        e.preventDefault();
+
+        const testData = {
+            test_date: $('#test-date').val(),
+            test_type: $('#test-type').val(),
+            test_result: $('#test-result').val(),
+            result_value: $('#result-value').val(),
+            normal_range: $('#normal-range').val(),
+            lab_name: $('#lab-name').val()
+        };
+
+        const patientId = $('#test-patient-id').val();
+
+        if (!patientId) {
+            showError('Please enter Patient ID');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/patients/${patientId}/lab-tests`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(testData)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showSuccess('Lab test saved successfully!');
+                $('#lab-test-form')[0].reset();
+                loadLabTests();
+            } else {
+                showError(data.error || 'Failed to save lab test');
+            }
+        } catch (error) {
+            showError('Network error. Please try again.');
+            console.error('Lab test error:', error);
+        }
+    }
+
+    async function loadLabTests() {
+        try {
+            const response = await fetch(`${API_BASE}/lab-tests/recent`);
+            const data = await response.json();
+            updateLabTestsTable(data.tests || []);
+        } catch (error) {
+            console.error('Error loading lab tests:', error);
+            showError('Error loading lab tests');
+        }
+    }
+
+    function updateLabTestsTable(tests) {
+        const tbody = $('#lab-tests-body');
+        tbody.empty();
+
+        tests.forEach(test => {
+            const resultClass = test.result === 'Positive' ? 'text-danger' :
+                              test.result === 'Negative' ? 'text-success' : 'text-warning';
+            tbody.append(`
+                <tr>
+                    <td>${test.test_id}</td>
+                    <td>${test.patient_id}</td>
+                    <td>${test.test_type}</td>
+                    <td><span class="${resultClass}">${test.result}</span></td>
+                    <td>${test.date}</td>
+                    <td>${test.value || 'N/A'}</td>
+                </tr>
+            `);
+        });
+    }
+
+    // Daily Monitoring
+    async function handleDailyMonitoring(e) {
+        e.preventDefault();
+
+        const monitoringData = {
+            monitor_date: $('#monitor-date').val(),
+            temperature: $('#temperature').val(),
+            blood_pressure: $('#blood-pressure').val(),
+            platelet_count: $('#monitor-platelet').val(),
+            oxygen_saturation: $('#oxygen-saturation').val(),
+            pain_level: $('#pain-level').val(),
+            nurse_notes: $('#nurse-notes').val()
+        };
+
+        const patientId = $('#monitor-patient-id').val();
+
+        if (!patientId) {
+            showError('Please enter Patient ID');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/patients/${patientId}/daily-monitoring`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(monitoringData)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showSuccess('Monitoring record saved successfully!');
+                $('#monitoring-form')[0].reset();
+                loadMonitoringData();
+            } else {
+                showError(data.error || 'Failed to save monitoring record');
+            }
+        } catch (error) {
+            showError('Network error. Please try again.');
+            console.error('Monitoring error:', error);
+        }
+    }
+
+    async function loadMonitoringData() {
+        try {
+            const response = await fetch(`${API_BASE}/monitoring/recent`);
+            const data = await response.json();
+            updateMonitoringTable(data.monitoring || []);
+        } catch (error) {
+            console.error('Error loading monitoring data:', error);
+            showError('Error loading monitoring data');
+        }
+    }
+
+    function updateMonitoringTable(monitoring) {
+        const tbody = $('#monitoring-body');
+        tbody.empty();
+
+        monitoring.forEach(record => {
+            tbody.append(`
+                <tr>
+                    <td>${record.date}</td>
+                    <td>${record.patient_id}</td>
+                    <td>${record.temperature || 'N/A'}</td>
+                    <td>${record.platelet_count ? record.platelet_count.toLocaleString() : 'N/A'}</td>
+                    <td>${record.blood_pressure || 'N/A'}</td>
+                    <td>${record.oxygen_saturation || 'N/A'}</td>
+                </tr>
+            `);
+        });
+    }
+
+    // Helper Functions
+    function showSection(sectionId) {
+        $('.dashboard-section').removeClass('active');
+        $('.nav-link').removeClass('active');
+        $(`[onclick="showSection('${sectionId}')"]`).addClass('active');
+        $(`#${sectionId}-section`).addClass('active');
+    }
+
+    function getSeverityClass(severity) {
+        switch(severity?.toLowerCase()) {
+            case 'critical': return 'critical-badge';
+            case 'severe': return 'severe-badge';
+            case 'moderate': return 'moderate-badge';
+            default: return 'badge bg-secondary';
+        }
+    }
+
+    function getContactStatusClass(status) {
+        switch(status?.toLowerCase()) {
+            case 'positive': return 'badge bg-danger';
+            case 'tested': return 'badge bg-warning';
+            case 'negative': return 'badge bg-success';
+            case 'monitored': return 'badge bg-info';
+            case 'quarantined': return 'badge bg-dark';
+            default: return 'badge bg-secondary';
+        }
+    }
+
+    function generateDemoPatients(count) {
+        const districts = ['Dhaka', 'Chittagong', 'Rajshahi', 'Khulna', 'Sylhet', 'Barisal', 'Rangpur'];
+        const severities = ['Mild', 'Moderate', 'Severe', 'Critical'];
+        const outcomes = ['Under Treatment', 'Recovered', 'Referred'];
+
+        const patients = [];
+        for (let i = 1; i <= count; i++) {
+            const severity = severities[Math.floor(Math.random() * severities.length)];
+            patients.push({
+                patient_id: 1000 + i,
+                name: `Patient ${i}`,
+                age: 20 + Math.floor(Math.random() * 50),
+                gender: Math.random() > 0.5 ? 'Male' : 'Female',
+                phone: '017' + Math.floor(10000000 + Math.random() * 90000000),
+                district: districts[Math.floor(Math.random() * districts.length)],
+                severity: severity,
+                diagnosis_date: `2024-01-${String(Math.floor(Math.random() * 15) + 1).padStart(2, '0')}`,
+                outcome: outcomes[Math.floor(Math.random() * outcomes.length)]
+            });
+        }
+        return patients;
+    }
+
+    function updatePagination(data) {
+        currentPage = data.current_page;
+        totalPages = data.pages;
+
+        const pagination = $('#pagination');
+        pagination.empty();
+
+        // Previous button
+        pagination.append(`
+            <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">Previous</a>
+            </li>
+        `);
+
+        // Page numbers
+        const maxPages = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxPages / 2));
+        let endPage = Math.min(totalPages, startPage + maxPages - 1);
+
+        if (endPage - startPage + 1 < maxPages) {
+            startPage = Math.max(1, endPage - maxPages + 1);
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            pagination.append(`
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+                </li>
+            `);
+        }
+
+        // Next button
+        pagination.append(`
+            <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">Next</a>
+            </li>
+        `);
+    }
+
+    function changePage(page) {
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
+        loadPatients();
+    }
+
+    async function viewPatientDetails(patientId) {
+        try {
+            const response = await fetch(`${API_BASE}/patients/${patientId}`);
+            if (response.ok) {
+                const data = await response.json();
+                showPatientModal(data);
+            } else {
+                showError('Failed to load patient details');
+            }
+        } catch (error) {
+            showError('Network error loading patient details');
+        }
+    }
+
+    function showPatientModal(patientData) {
+        // Create and show modal with patient details
+        const modalHtml = `
+            <div class="modal fade" id="patientModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title">Patient Details - ${patientData.personal_info.name}</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Personal Information</h6>
+                                    <p><strong>Patient ID:</strong> ${patientData.patient_id}</p>
+                                    <p><strong>Name:</strong> ${patientData.personal_info.name}</p>
+                                    <p><strong>Age:</strong> ${patientData.personal_info.age}</p>
+                                    <p><strong>Gender:</strong> ${patientData.personal_info.gender}</p>
+                                    <p><strong>Phone:</strong> ${patientData.personal_info.phone}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Dengue Information</h6>
+                                    <p><strong>Severity:</strong> <span class="${getSeverityClass(patientData.dengue_info.severity)}">${patientData.dengue_info.severity}</span></p>
+                                    <p><strong>Diagnosis Date:</strong> ${patientData.dengue_info.diagnosis_date}</p>
+                                    <p><strong>Dengue Type:</strong> ${patientData.dengue_info.dengue_type}</p>
+                                    <p><strong>Outcome:</strong> ${patientData.dengue_info.outcome}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        $('body').append(modalHtml);
+        const modal = new bootstrap.Modal(document.getElementById('patientModal'));
+        modal.show();
+
+        // Remove modal after hiding
+        $('#patientModal').on('hidden.bs.modal', function () {
+            $(this).remove();
+        });
+    }
+
+    function alertEmergency(patientId) {
+        showSuccess(`Emergency alert sent for patient ${patientId}! Medical team notified.`);
+    }
+
+    async function advancedSearch() {
+        const name = $('#search-name').val();
+        const phone = $('#search-phone').val();
+        const district = $('#search-by-district').val();
+        const severity = $('#search-by-severity').val();
+        const dateFrom = $('#date-from').val();
+        const dateTo = $('#date-to').val();
+
+        try {
+            let url = `${API_BASE}/search/patients?`;
+            const params = [];
+            if (name) params.push(`name=${encodeURIComponent(name)}`);
+            if (phone) params.push(`phone=${phone}`);
+            if (district) params.push(`district=${district}`);
+            if (severity) params.push(`severity=${severity}`);
+            if (dateFrom) params.push(`date_from=${dateFrom}`);
+            if (dateTo) params.push(`date_to=${dateTo}`);
+
+            url += params.join('&');
+
+            const response = await fetch(url);
+            const data = await response.json();
+            updateSearchResults(data.patients || []);
+        } catch (error) {
+            console.error('Search error:', error);
+            showError('Search failed. Please try again.');
+        }
+    }
+
+    function updateSearchResults(patients) {
+        const tbody = $('#search-results-body');
+        tbody.empty();
+
+        patients.forEach(patient => {
+            const severityClass = getSeverityClass(patient.severity);
+            tbody.append(`
+                <tr class="patient-row" onclick="viewPatientDetails(${patient.patient_id})">
+                    <td>${patient.patient_id}</td>
+                    <td>${patient.name}</td>
+                    <td>${patient.age}</td>
+                    <td>${patient.phone}</td>
+                    <td>${patient.district}</td>
+                    <td><span class="${severityClass}">${patient.severity}</span></td>
+                    <td>${patient.platelet_count ? patient.platelet_count.toLocaleString() : 'N/A'}</td>
+                    <td>${patient.diagnosis_date}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); viewPatientDetails(${patient.patient_id})">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+            `);
+        });
+    }
+
+    function populateDistrictFilters() {
+        const districts = ['Dhaka', 'Chittagong', 'Rajshahi', 'Khulna', 'Sylhet', 'Barisal', 'Rangpur', 'Mymensingh'];
+
+        $('#filter-district, #search-by-district').each(function() {
+            $(this).empty().append('<option value="">All Districts</option>');
+            districts.forEach(district => {
+                $(this).append(`<option value="${district}">${district}</option>`);
+            });
+        });
+    }
+</script>
+</body>
+</html>
